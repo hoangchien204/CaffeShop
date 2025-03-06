@@ -143,7 +143,7 @@ const HomeScreen = ({navigation}: any) => {
             }}>
             <CustomIcon
               style={styles.InputIcon}
-              name="search"
+              name="magnify"
               size={FONTSIZE.size_18}
               color={
                 searchText.length > 0

@@ -108,7 +108,7 @@ const CartItem: React.FC<CartItemProps> = ({
                     incrementCartItemQuantityHandler(id, data.size);
                   }}>
                   <CustomIcon
-                    name="add"
+                    name="plus-thick"
                     color={COLORS.primaryWhiteHex}
                     size={FONTSIZE.size_10}
                   />
@@ -175,7 +175,7 @@ const CartItem: React.FC<CartItemProps> = ({
                   incrementCartItemQuantityHandler(id, prices[0].size);
                 }}>
                 <CustomIcon
-                  name="add"
+                  name="plus-thick"
                   color={COLORS.primaryWhiteHex}
                   size={FONTSIZE.size_10}
                 />

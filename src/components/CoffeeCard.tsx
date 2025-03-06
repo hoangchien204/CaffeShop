@@ -87,7 +87,7 @@ const CoffeeCard: React.FC<CoffeeCardProps> = ({
           }}>
           <BGIcon
             color={COLORS.primaryWhiteHex}
-            name={'add'}
+            name={'plus-thick'}
             BGColor={COLORS.primaryOrangeHex}
             size={FONTSIZE.size_10}
           />

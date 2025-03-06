@@ -1,4 +1,7 @@
 import React, {useState} from 'react';
+import { FontAwesome } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+
 import {
   StyleSheet,
   Text,
@@ -46,6 +49,7 @@ const PaymentList = [
 ];
 
 const PaymentScreen = ({navigation, route}: any) => {
+  const router = useRouter();
   const calculateCartPrice = useStore((state: any) => state.calculateCartPrice);
   const addToOrderHistoryListFromCart = useStore(
     (state: any) => state.addToOrderHistoryListFromCart,
@@ -55,12 +59,13 @@ const PaymentScreen = ({navigation, route}: any) => {
   const [showAnimation, setShowAnimation] = useState(false);
 
   const buttonPressHandler = () => {
+    
     setShowAnimation(true);
     addToOrderHistoryListFromCart();
     calculateCartPrice();
     setTimeout(() => {
       setShowAnimation(false);
-      navigation.navigate('History');
+      router.push('History')
     }, 2000);
   };
 
@@ -86,7 +91,7 @@ const PaymentScreen = ({navigation, route}: any) => {
               navigation.pop();
             }}>
             <GradientBGIcon
-              name="left"
+              name="arrow-left"
               color={COLORS.primaryLightGreyHex}
               size={FONTSIZE.size_16}
             />
@@ -123,8 +128,8 @@ const PaymentScreen = ({navigation, route}: any) => {
                       size={FONTSIZE.size_20 * 2}
                       color={COLORS.primaryOrangeHex}
                     />
-                    <CustomIcon
-                      name="visa"
+                    <FontAwesome 
+                      name="cc-visa"
                       size={FONTSIZE.size_30 * 2}
                       color={COLORS.primaryWhiteHex}
                     />
