@@ -24,7 +24,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import CustomIcon from '../components/CustomIcon';
 import {useStore} from '../store/store';
 import PopUpAnimation from '../components/PopUpAnimation';
-
+import { Image } from 'react-native';
 const PaymentList = [
   {
     name: 'Wallet',
@@ -59,15 +59,23 @@ const PaymentScreen = ({navigation, route}: any) => {
   const [showAnimation, setShowAnimation] = useState(false);
 
   const buttonPressHandler = () => {
-    
     setShowAnimation(true);
     addToOrderHistoryListFromCart();
     calculateCartPrice();
+    
     setTimeout(() => {
       setShowAnimation(false);
-      router.push('History')
+      console.log('Current route names:', navigation.getState().routeNames);
+
+      navigation.reset({
+        index: 0, 
+        routes: [{ name: 'Tab' }],
+      });
+
+      console.log("Hiển thị");
     }, 2000);
-  };
+};
+
 
   return (
     <View style={styles.ScreenContainer}>
@@ -123,10 +131,13 @@ const PaymentScreen = ({navigation, route}: any) => {
                   style={styles.LinearGradientStyle}
                   colors={[COLORS.primaryGreyHex, COLORS.primaryBlackHex]}>
                   <View style={styles.CreditCardRow}>
-                    <CustomIcon
-                      name="chip"
-                      size={FONTSIZE.size_20 * 2}
-                      color={COLORS.primaryOrangeHex}
+                  <Image
+                      source={require('../assets/coffee_assets/chip.png')}  // Đường dẫn ảnh local
+                      style={{
+                        width: FONTSIZE.size_20 * 2.359,
+                        height: FONTSIZE.size_20 * 2,
+                        tintColor: COLORS.primaryOrangeHex, // Nếu ảnh là icon dạng đơn sắc
+                      }}
                     />
                     <FontAwesome 
                       name="cc-visa"
@@ -135,10 +146,10 @@ const PaymentScreen = ({navigation, route}: any) => {
                     />
                   </View>
                   <View style={styles.CreditCardNumberContainer}>
-                    <Text style={styles.CreditCardNumber}>3879</Text>
-                    <Text style={styles.CreditCardNumber}>8923</Text>
-                    <Text style={styles.CreditCardNumber}>6745</Text>
-                    <Text style={styles.CreditCardNumber}>4638</Text>
+                    <Text style={styles.CreditCardNumber}>4089</Text>
+                    <Text style={styles.CreditCardNumber}>0410</Text>
+                    <Text style={styles.CreditCardNumber}>9669</Text>
+                    <Text style={styles.CreditCardNumber}>8910</Text>
                   </View>
                   <View style={styles.CreditCardRow}>
                     <View style={styles.CreditCardNameContainer}>
@@ -146,7 +157,7 @@ const PaymentScreen = ({navigation, route}: any) => {
                         Card Holder Name
                       </Text>
                       <Text style={styles.CreditCardNameTitle}>
-                        Robert Evans
+                        HOANG MINH CHIEN
                       </Text>
                     </View>
                     <View style={styles.CreditCardDateContainer}>
@@ -251,7 +262,7 @@ const styles = StyleSheet.create({
   },
   CreditCardNumber: {
     fontFamily: FONTFAMILY.poppins_semibold,
-    fontSize: FONTSIZE.size_18,
+    fontSize: FONTSIZE.size_16,
     color: COLORS.primaryWhiteHex,
     letterSpacing: SPACING.space_4 + SPACING.space_2,
   },
@@ -262,7 +273,7 @@ const styles = StyleSheet.create({
   },
   CreditCardNameTitle: {
     fontFamily: FONTFAMILY.poppins_medium,
-    fontSize: FONTSIZE.size_18,
+    fontSize: FONTSIZE.size_16,
     color: COLORS.primaryWhiteHex,
   },
   CreditCardNameContainer: {

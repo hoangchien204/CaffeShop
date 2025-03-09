@@ -28,6 +28,7 @@ const App = () => {
           name="Payment"
           component={PaymentScreen}
           options={{animation: 'slide_from_bottom'}}></Stack.Screen>
+     
       </Stack.Navigator>
   
   );

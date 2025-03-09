@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ImageBackground,
 } from 'react-native';
+
 import GradientBGIcon from './GradientBGIcon';
 import {
   BORDERRADIUS,
@@ -16,6 +17,9 @@ import {
   SPACING,
 } from '../theme/theme';
 import CustomIcon from './CustomIcon';
+import { Image } from 'react-native';
+
+
 
 interface ImageBackgroundInfoProps {
   EnableBackHandler: boolean;
@@ -60,7 +64,7 @@ const ImageBackgroundInfo: React.FC<ImageBackgroundInfoProps> = ({
                 BackHandler();
               }}>
               <GradientBGIcon
-                name="left"
+                name="arrow-left"
                 color={COLORS.primaryLightGreyHex}
                 size={FONTSIZE.size_16}
               />
@@ -70,7 +74,7 @@ const ImageBackgroundInfo: React.FC<ImageBackgroundInfoProps> = ({
                 ToggleFavourite(favourite, type, id);
               }}>
               <GradientBGIcon
-                name="like"
+                name="heart"
                 color={
                   favourite ? COLORS.primaryRedHex : COLORS.primaryLightGreyHex
                 }
@@ -85,7 +89,7 @@ const ImageBackgroundInfo: React.FC<ImageBackgroundInfoProps> = ({
                 ToggleFavourite(favourite, type, id);
               }}>
               <GradientBGIcon
-                name="like"
+                name="heart"
                 color={
                   favourite ? COLORS.primaryRedHex : COLORS.primaryLightGreyHex
                 }
@@ -105,11 +109,17 @@ const ImageBackgroundInfo: React.FC<ImageBackgroundInfoProps> = ({
                 </Text>
               </View>
               <View style={styles.ItemPropertiesContainer}>
-                <View style={styles.ProperFirst}>
-                  <CustomIcon
-                    name={type == 'Bean' ? 'bean' : 'beans'}
-                    size={type == 'Bean' ? FONTSIZE.size_18 : FONTSIZE.size_24}
-                    color={COLORS.primaryOrangeHex}
+                <View style={styles.ProperFirst}>  
+                  <Image
+                    source={type === 'Bean' 
+                      ? require('../assets/coffee_assets/coffee-bean.png') 
+                      : require('../assets/coffee_assets/coffee-beans.png')
+                    }
+                    style={{
+                      width: type === 'Bean' ? FONTSIZE.size_18 : FONTSIZE.size_24,
+                      height: type === 'Bean' ? FONTSIZE.size_18 : FONTSIZE.size_24,
+                    }}
+                    resizeMode="contain"
                   />
                   <Text
                     style={[
@@ -125,10 +135,16 @@ const ImageBackgroundInfo: React.FC<ImageBackgroundInfoProps> = ({
                   </Text>
                 </View>
                 <View style={styles.ProperFirst}>
-                  <CustomIcon
-                    name={type == 'Bean' ? 'location' : 'drop'}
-                    size={FONTSIZE.size_16}
-                    color={COLORS.primaryOrangeHex}
+                <Image
+                    source={type === 'Bean' 
+                      ? require('../assets/coffee_assets/Africa.png') 
+                      : require('../assets/coffee_assets/milk.png')
+                    }
+                    style={{
+                      width: type === 'Bean' ? FONTSIZE.size_18 : FONTSIZE.size_24,
+                      height: type === 'Bean' ? FONTSIZE.size_18 : FONTSIZE.size_24,
+                    }}
+                    resizeMode="contain"
                   />
                   <Text style={styles.PropertyTextLast}>{ingredients}</Text>
                 </View>
