@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { generateAndDownloadPDF  } from '../components/DownloadPDF'; // 🔹 Import hàm tải PDF
 import React, {useState} from 'react';
 import {useStore} from '../store/store';
 import {useBottomTabBarHeight} from '@react-navigation/bottom-tabs';
@@ -34,8 +35,9 @@ const OrderHistoryScreen = ({navigation}: any) => {
     });
   };
 
-  const buttonPressHandler = () => {
+  const buttonPressHandler = async () => {
     setShowAnimation(true);
+    await generateAndDownloadPDF(OrderHistoryList);
     setTimeout(() => {
       setShowAnimation(false);
     }, 2000);
@@ -81,8 +83,7 @@ const OrderHistoryScreen = ({navigation}: any) => {
           {OrderHistoryList.length > 0 ? (
             <TouchableOpacity
               style={styles.DownloadButton}
-              onPress={() => {
-                buttonPressHandler();
+              onPress={() => {buttonPressHandler();
               }}>
               <Text style={styles.ButtonText}>Download</Text>
             </TouchableOpacity>

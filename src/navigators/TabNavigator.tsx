@@ -20,12 +20,12 @@ const TabNavigator = () => {
         tabBarShowLabel: false,
         tabBarStyle: styles.tabBarStyle,
         tabBarBackground: () => (
+          
           <BlurView
             intensity={15}  
             tint="light"    
             style={styles.BlurViewStyles}
           />
-
         ),
       }}>
       <Tab.Screen
@@ -90,12 +90,12 @@ const TabNavigator = () => {
 
 const styles = StyleSheet.create({
   tabBarStyle: {
-    height: 80,
+    height: 60,
     position: 'absolute',
-    backgroundColor: COLORS.primaryBlackRGBA,
     borderTopWidth: 0,
     elevation: 0,
     borderTopColor: 'transparent',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)', // Màu tối hơn
   },
   BlurViewStyles: {
     position: 'absolute',
