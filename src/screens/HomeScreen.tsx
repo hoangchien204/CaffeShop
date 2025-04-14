@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useRef,useEffect, useState} from 'react';
 import {
   ScrollView,
   StatusBar,
@@ -9,7 +9,7 @@ import {
   View,
   ToastAndroid,
 } from 'react-native';
-import {useStore} from '../store/store';
+import {useStore, CoffeeItem} from '../store/store';
 import {useBottomTabBarHeight} from '@react-navigation/bottom-tabs';
 import {
   BORDERRADIUS,
@@ -23,6 +23,7 @@ import CustomIcon from '../components/CustomIcon';
 import {FlatList} from 'react-native';
 import CoffeeCard from '../components/CoffeeCard';
 import {Dimensions} from 'react-native';
+import axios from 'axios';
 
 const getCategoriesFromData = (data: any) => {
   let temp: any = {};
@@ -46,24 +47,74 @@ const getCoffeeList = (category: string, data: any) => {
     return coffeelist;
   }
 };
+const getBeansList = (category: string, list: any[]) => {
+  if (category === "All") return list; // Nếu chọn "All", trả về toàn bộ danh sách
+  return list.filter(item => item.type === category);
+};
+interface CoffeeCardProps {
+  id: string;
+  index: number;
+  name: string;
+  roasted: string;
+  imagelink_square: string;
+  imagelink_portrait: string;
+  special_ingredient: string;
+  type: string;
+  prices: { size: string; price: string; currency: string; quantity?: number,option: string }[];
+  average_rating?: number;
+  price?: string;
+  buttonPressHandler?: () => void;
+  ratings_count?: string;  // 👈 Thêm thuộc tính này
+}
 
 const HomeScreen = ({navigation}: any) => {
+  
   const CoffeeList = useStore((state: any) => state.CoffeeList);
+  const fetchCoffeeList = useStore((state: any) => state.fetchCoffeeList);
   const BeanList = useStore((state: any) => state.BeanList);
+  const fetchBeansList = useStore((state: any) => state.fetchBeansList);
   const addToCart = useStore((state: any) => state.addToCart);
   const calculateCartPrice = useStore((state: any) => state.calculateCartPrice);
-
-  const [categories, setCategories] = useState(
-    getCategoriesFromData(CoffeeList),
-  );
+  
+  const [categories, setCategories] = useState<string[]>([]);
   const [searchText, setSearchText] = useState('');
   const [categoryIndex, setCategoryIndex] = useState({
     index: 0,
-    category: categories[0],
+    category: 'All',
   });
-  const [sortedCoffee, setSortedCoffee] = useState(
-    getCoffeeList(categoryIndex.category, CoffeeList),
-  );
+  const [beansCategory, setBeansCategory] = useState({
+    index: 0,
+    category: 'All',
+  });
+  const [sortedCoffee, setSortedCoffee] = useState<any[]>([]);
+
+  // 🛠 Gọi API khi component mount
+  useEffect(() => {
+    fetchCoffeeList();
+  }, []);
+
+  // 🔄 Cập nhật categories khi CoffeeList thay đổi
+  useEffect(() => {
+    setCategories(getCategoriesFromData(CoffeeList));
+  }, [CoffeeList]);
+
+ 
+  useEffect(() => {
+    setSortedCoffee(getCoffeeList(categoryIndex.category, CoffeeList));
+  }, [categoryIndex, CoffeeList]);
+
+  const [sortedBeans, setSortedBeans] = useState<any[]>([]);
+
+// 🛠 Gọi API khi component mount
+    useEffect(() => {
+      fetchBeansList();
+    }, []);
+
+// 🔄 Cập nhật danh sách Beans khi BeanList thay đổi
+useEffect(() => {
+  setSortedBeans(getBeansList(beansCategory.category, BeanList));
+}, [beansCategory, BeanList]);
+
 
   const ListRef: any = useRef<FlatList>();
   const tabBarHeight = useBottomTabBarHeight();
@@ -93,31 +144,69 @@ const HomeScreen = ({navigation}: any) => {
     setSearchText('');
   };
 
-  const CoffeCardAddToCart = ({
-    id,
-    index,
-    name,
-    roasted,
-    imagelink_square,
-    special_ingredient,
-    type,
-    prices,
-  }: any) => {
-    addToCart({
-      id,
-      index,
-      name,
-      roasted,
-      imagelink_square,
-      special_ingredient,
-      type,
-      prices,
-    });
+  const handleAddToCart = (
+    item: CoffeeCardProps,
+    selectedSize: string,
+    selectedOption: string
+  ) => {
+    console.log("✅ item.prices:", item.prices);
+console.log("🔎 selectedSize:", selectedSize, "selectedOption:", selectedOption);
+    const addToCart = useStore.getState().addToCart;
+    const calculateCartPrice = useStore.getState().calculateCartPrice;
+  
+    if (!item.prices || !Array.isArray(item.prices) || item.prices.length === 0) {
+      console.error("❌ Lỗi: Prices không hợp lệ!", item.prices);
+      return;
+    }
+  const isCoffee = item.type.toLowerCase() === "coffee";
+  const isBean = item.type.toLowerCase() === "bean";
+ 
+const validPrice = item.prices.find((p) => {
+  if (isCoffee) {
+    return (
+      p.size === selectedSize &&
+      (p.option === selectedOption || !p.option || selectedOption === "Không có")
+    );
+  } else {
+    return p.size === selectedSize;
+  }
+});
+  
+  if (!validPrice) {
+    console.error("🚨 Không tìm thấy giá phù hợp! selectedSize:", selectedSize, "selectedOption:", selectedOption);
+    console.log("📦 Danh sách prices:", item.prices);
+    return;
+  }
+
+    const cartItem: CoffeeItem = {
+      id: item.id,
+      name: item.name,
+      description: "Không có mô tả",
+      roasted: item.roasted,
+      imagelink_square: item.imagelink_square,
+      imagelink_portrait: item.imagelink_portrait,
+      ingredients: "",
+      special_ingredient: item.special_ingredient,
+      prices: [
+        {
+          ...validPrice,
+          quantity: 1,
+          ...(isCoffee ? { option: 'Nóng' } : {option: 'Không có'}) // 👉 chỉ thêm nếu là coffee
+        }
+      ],
+      average_rating: item.average_rating || 0,
+      ratings_count: item.ratings_count || "0",
+      favourite: false,
+      type: item.type,
+      index: item.index,
+    };
+  
+    addToCart(cartItem);
     calculateCartPrice();
     ToastAndroid.showWithGravity(
-      `${name} is Added to Cart`,
+      `${item.name} đã thêm vào giỏ hàng`,
       ToastAndroid.SHORT,
-      ToastAndroid.CENTER,
+      ToastAndroid.CENTER
     );
   };
 
@@ -130,9 +219,6 @@ const HomeScreen = ({navigation}: any) => {
         {/* App Header */}
         <HeaderBar />
 
-        <Text style={styles.ScreenTitle}>
-          Find the best{'\n'}coffee for you
-        </Text>
 
         {/* Search Input */}
 
@@ -222,90 +308,146 @@ const HomeScreen = ({navigation}: any) => {
 
         {/* Coffee Flatlist */}
 
+        {sortedCoffee.length === 0 ? (
+  <Text style={{ textAlign: 'center', marginTop: 20 }}>Loading coffee data...</Text>
+) : (
         <FlatList
-          ref={ListRef}
-          horizontal
-          ListEmptyComponent={
-            <View style={styles.EmptyListContainer}>
-              <Text style={styles.CategoryText}>No Coffee Available</Text>
-            </View>
+        ref={ListRef}
+        horizontal
+        ListEmptyComponent={
+          <View style={styles.EmptyListContainer}>
+            <Text style={styles.CategoryText}>No Coffee Available</Text>
+          </View>
+        }
+        
+        showsHorizontalScrollIndicator={false}
+        data={sortedCoffee}
+        contentContainerStyle={styles.FlatListContainer}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item, index }) => { // Lấy index từ renderItem
+          if (!item || !item.prices) {
+            console.error("Lỗi: item hoặc prices bị undefined!", item);
+            return null;
           }
-          showsHorizontalScrollIndicator={false}
-          data={sortedCoffee}
-          contentContainerStyle={styles.FlatListContainer}
-          keyExtractor={item => item.id}
-          renderItem={({item}) => {
-            return (
-              <TouchableOpacity
-                onPress={() => {
-                  navigation.push('Details', {
-                    index: item.index,
-                    id: item.id,
-                    type: item.type,
-                  });
-                }}>
-                <CoffeeCard
-                  id={item.id}
-                  index={item.index}
-                  type={item.type}
-                  roasted={item.roasted}
-                  imagelink_square={item.imagelink_square}
-                  name={item.name}
-                  special_ingredient={item.special_ingredient}
-                  average_rating={item.average_rating}
-                  price={item.prices[2]}
-                  buttonPressHandler={CoffeCardAddToCart}
-                />
-              </TouchableOpacity>
-            );
-          }}
-        />
+
+          let pricesArray = [];
+          if (item.prices) {
+            try {
+              pricesArray = typeof item.prices === "string" ? JSON.parse(item.prices) : item.prices;
+         
+            } catch (error) {
+              console.error("❌ Lỗi parse JSON:", error);
+            }
+          }
+          const priceValue = pricesArray.length > 0 && pricesArray[0]?.price !== undefined
+            ? `${pricesArray[0].currency}${pricesArray[0].price}`
+            : "N/A";
+          return (
+            <TouchableOpacity
+            onPress={() => {
+                navigation.push("Details", {
+                index, // Dùng index từ FlatList
+                id: item.id,
+                type: item.type,
+              });
+            }}
+            >
+              <CoffeeCard
+                id={item.id}
+                index={index}
+                type={item.type}
+                roasted={item.roasted}
+                imagelink_square={item.imagelink_square}
+                name={item.name}
+                special_ingredient={item.special_ingredient}
+                average_rating={item.average_rating}
+                price={priceValue}
+                buttonPressHandler={() => {
+                  const defaultSize = item.prices[0].size;
+                  const defaultOption = item.type.toLowerCase() === 'coffee' ? 'Nóng' : 'Không có';
+                  handleAddToCart(item, defaultSize, defaultOption);
+                }}
+                
+              />
+              
+              
+            </TouchableOpacity>
+            
+          );
+          
+        }}  
+      />
+
+    )}
+
 
         <Text style={styles.CoffeeBeansTitle}>Coffee Beans</Text>
 
         {/* Beans Flatlist */}
-
         <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={BeanList}
-          contentContainerStyle={[
-            styles.FlatListContainer,
-            {marginBottom: tabBarHeight},
-          ]}
-          keyExtractor={item => item.id}
-          renderItem={({item}) => {
-            return (
-              <TouchableOpacity
-                onPress={() => {
-                  navigation.push('Details', {
-                    index: item.index,
-                    id: item.id,
-                    type: item.type,
-                  });
-                }}>
-                <CoffeeCard
-                  id={item.id}
-                  index={item.index}
-                  type={item.type}
-                  roasted={item.roasted}
-                  imagelink_square={item.imagelink_square}
-                  name={item.name}
-                  special_ingredient={item.special_ingredient}
-                  average_rating={item.average_rating}
-                  price={item.prices[2]}
-                  buttonPressHandler={CoffeCardAddToCart}
-                />
-              </TouchableOpacity>
-            );
-          }}
-        />
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        data={sortedBeans} // Đổi BeanList thành sortedBeans
+        contentContainerStyle={[
+          styles.FlatListContainer,
+          { marginBottom: tabBarHeight },
+        ]}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item,index }) => {
+          if (!item || !item.prices) {
+            console.error("Lỗi: item hoặc prices bị undefined!", item);
+            return null;
+          }
+
+          let pricesArray = [];
+          if (item.prices) {
+            try {
+              pricesArray = typeof item.prices === "string" ? JSON.parse(item.prices) : item.prices;
+         
+            } catch (error) {
+              console.error("❌ Lỗi parse JSON:", error);
+            }
+          }
+          const priceValue = pricesArray.length > 0 && pricesArray[0]?.price !== undefined
+            ? `${pricesArray[0].currency}${pricesArray[0].price}`
+            : "N/A";
+          return (
+            <TouchableOpacity
+              onPress={() => {
+                navigation.push('Details', {
+                  index, // Dùng index từ FlatList
+                id: item.id,
+                type: item.type,
+                });
+              }}>
+              <CoffeeCard
+                 id={item.id}
+                 index={index}
+                 type={item.type}
+                 roasted={item.roasted}
+                 imagelink_square={item.imagelink_square}
+                 name={item.name}
+                 special_ingredient={item.special_ingredient}
+                 average_rating={item.average_rating}
+                 price={priceValue}
+                 buttonPressHandler={() => {
+                  const defaultSize = item.prices[0].size;
+                  const defaultOption = item.type.toLowerCase() === 'coffee' ? 'Nóng' : 'Không có';
+                  handleAddToCart(item, defaultSize, defaultOption);
+                }}
+              />
+            </TouchableOpacity>
+          );
+            }}
+    />
+
       </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  
   ScreenContainer: {
     flex: 1,
     backgroundColor: COLORS.primaryBlackHex,
@@ -377,5 +519,7 @@ const styles = StyleSheet.create({
     color: COLORS.secondaryLightGreyHex,
   },
 });
+
+
 
 export default HomeScreen;

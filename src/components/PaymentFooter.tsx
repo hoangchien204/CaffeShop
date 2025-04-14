@@ -15,7 +15,7 @@ interface PriceProps {
 
 interface PaymentFooterProps {
   price: PriceProps;
-  buttonPressHandler: any;
+  buttonPressHandler: (() => void) | undefined; 
   buttonTitle: string;
 }
 
@@ -34,7 +34,13 @@ const PaymentFooter: React.FC<PaymentFooterProps> = ({
       </View>
       <TouchableOpacity
         style={styles.PayButton}
-        onPress={() => buttonPressHandler()}>
+        onPress={() => {
+          if (typeof buttonPressHandler === "function") {
+            buttonPressHandler(); // Gọi function nếu hợp lệ
+          } else {
+            console.warn("buttonPressHandler is not a function");
+          }
+        }}>
         <Text style={styles.ButtonText}>{buttonTitle}</Text>
       </TouchableOpacity>
     </View>

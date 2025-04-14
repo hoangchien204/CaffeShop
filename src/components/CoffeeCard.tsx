@@ -53,8 +53,8 @@ const CoffeeCard: React.FC<CoffeeCardProps> = ({
       end={{x: 1, y: 1}}
       style={styles.CardLinearGradientContainer}
       colors={[COLORS.primaryGreyHex, COLORS.primaryBlackHex]}>
-      <ImageBackground
-        source={imagelink_square}
+      <ImageBackground  
+        source={typeof imagelink_square === "string" ? {uri: imagelink_square} : imagelink_square}
         style={styles.CardImageBG}
         resizeMode="cover">
         <View style={styles.CardRatingContainer}>
@@ -69,9 +69,10 @@ const CoffeeCard: React.FC<CoffeeCardProps> = ({
       <Text style={styles.CardTitle}>{name}</Text>
       <Text style={styles.CardSubtitle}>{special_ingredient}</Text>
       <View style={styles.CardFooterRow}>
-        <Text style={styles.CardPriceCurrency}>
-          $ <Text style={styles.CardPrice}>{price.price}</Text>
-        </Text>
+      <Text style={styles.CardPriceCurrency}>
+        {typeof price === "string" ? price : `$${price}`}
+      </Text>
+        
         <TouchableOpacity
           onPress={() => {
             buttonPressHandler({

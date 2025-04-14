@@ -13,7 +13,7 @@ import {
 
 interface FavoritesItemCardProps {
   id: string;
-  imagelink_portrait: ImageProps;
+  imagelink_portrait: string;
   name: string;
   special_ingredient: string;
   type: string;
@@ -40,6 +40,7 @@ const FavoritesItemCard: React.FC<FavoritesItemCardProps> = ({
   favourite,
   ToggleFavouriteItem,
 }) => {
+  
   return (
     <View style={styles.CardContainer}>
       <ImageBackgroundInfo

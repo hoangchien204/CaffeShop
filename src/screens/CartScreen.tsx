@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   ScrollView,
   StatusBar,
@@ -18,9 +18,12 @@ import CartItem from '../components/CartItem';
 const CartScreen = ({navigation, route}: any) => {
   const CartList = useStore((state: any) => state.CartList);
   const CartPrice = useStore((state: any) => state.CartPrice);
+  const userId = "guest";
+
   const incrementCartItemQuantity = useStore(
     (state: any) => state.incrementCartItemQuantity,
   );
+ 
   const decrementCartItemQuantity = useStore(
     (state: any) => state.decrementCartItemQuantity,
   );
@@ -35,12 +38,19 @@ const CartScreen = ({navigation, route}: any) => {
     incrementCartItemQuantity(id, size);
     calculateCartPrice();
   };
+  
 
   const decrementCartItemQuantityHandler = (id: string, size: string) => {
     decrementCartItemQuantity(id, size);
     calculateCartPrice();
   };
+
+  console.log('Giỏ hàng:', CartList); // Kiểm tra giỏ hàng
+
+ 
+
   return (
+    
     <View style={styles.ScreenContainer}>
       <StatusBar backgroundColor={COLORS.primaryBlackHex} />
 
@@ -51,55 +61,69 @@ const CartScreen = ({navigation, route}: any) => {
           style={[styles.ScrollViewInnerView, {marginBottom: tabBarHeight}]}>
           <View style={styles.ItemContainer}>
             <HeaderBar title="Cart" />
-
-            {CartList.length == 0 ? (
-              <EmptyListAnimation title={'Cart is Empty'} />
-            ) : (
-              <View style={styles.ListItemContainer}>
-                {CartList.map((data: any) => (
-                  <TouchableOpacity
-                    onPress={() => {
-                      navigation.push('Details', {
-                        index: data.index,
-                        id: data.id,
-                        type: data.type,
-                      });
-                    }}
-                    key={data.id}>
-                    <CartItem
-                      id={data.id}
-                      name={data.name}
-                      imagelink_square={data.imagelink_square}
-                      special_ingredient={data.special_ingredient}
-                      roasted={data.roasted}
-                      prices={data.prices}
-                      type={data.type}
-                      incrementCartItemQuantityHandler={
-                        incrementCartItemQuantityHandler
-                      }
-                      decrementCartItemQuantityHandler={
-                        decrementCartItemQuantityHandler
-                      }
-                    />
-                  </TouchableOpacity>
-                ))}
+           
+            {CartList.length === 0 ? (
+  <EmptyListAnimation title={'Cart is Empty'} />
+) : (
+  <View style={styles.ListItemContainer}>
+    {CartList?.map((data: any, index: number) => {
+    
+    return (
+      <TouchableOpacity
+        key={`${data.id}-${data.type}-${index}`} // Đảm bảo key không trùng
+        onPress={() => {
+          navigation.push('Details', {
+            index: data.index,
+            id: data.id,
+            type: data.type,
+          });
+        }}>
+        <CartItem
+          id={data.id}
+          name={data.name}
+          imagelink_portrait={data.imagelink_portrait}
+          imagelink_square={data.imagelink_square}
+          special_ingredient={data.special_ingredient}
+          roasted={data.roasted}
+          prices={data.prices}
+          type={data.type}
+          incrementCartItemQuantityHandler={() =>
+            incrementCartItemQuantity(
+              data.id,
+              data.prices[0].size,
+              data.prices[0].option || '' // 👈 Thêm option
+            )
+          }
+          decrementCartItemQuantityHandler={() =>
+            decrementCartItemQuantity(
+              data.id,
+              data.prices[0].size,
+              data.prices[0].option || '' // 👈 Thêm option
+            )
+          }
+        />
+      </TouchableOpacity>
+    );
+  })}
               </View>
             )}
           </View>
 
           {CartList.length != 0 ? (
             <PaymentFooter
-              buttonPressHandler={buttonPressHandler}
-              buttonTitle="Pay"
-              price={{price: CartPrice, currency: '$'}}
-            />
+            buttonPressHandler={buttonPressHandler}
+            buttonTitle="Pay"
+            price={{price: CartPrice, currency: '$'}}
+          />
           ) : (
             <></>
           )}
         </View>
       </ScrollView>
     </View>
+    
   );
+
 };
 
 const styles = StyleSheet.create({

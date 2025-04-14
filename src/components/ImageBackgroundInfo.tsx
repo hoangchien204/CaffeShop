@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -18,12 +18,13 @@ import {
 } from '../theme/theme';
 import CustomIcon from './CustomIcon';
 import { Image } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 
 interface ImageBackgroundInfoProps {
   EnableBackHandler: boolean;
-  imagelink_portrait: ImageProps;
+  imagelink_portrait: string;
   type: string;
   id: string;
   favourite: boolean;
@@ -36,6 +37,7 @@ interface ImageBackgroundInfoProps {
   BackHandler?: any;
   ToggleFavourite: any;
 }
+
 
 const ImageBackgroundInfo: React.FC<ImageBackgroundInfoProps> = ({
   EnableBackHandler,
@@ -52,52 +54,120 @@ const ImageBackgroundInfo: React.FC<ImageBackgroundInfoProps> = ({
   BackHandler,
   ToggleFavourite,
 }) => {
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isFavorite, setIsFavorite] = useState<boolean>(false); 
+  useEffect(() => {
+    const getUserId = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem("user_id");
+        if (storedUserId) {
+          setUserId(String(storedUserId).trim());
+        }
+      } catch (error) {
+        console.error("❌ Lỗi khi lấy user_id từ AsyncStorage:", error);
+      }
+    };
+  
+    getUserId();
+  }, []);
+  
+  
+  // Lấy danh sách yêu thích từ API
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      try {
+        const response = await fetch(`http://192.168.1.150:3000/api/favorites?userId=${userId}`);
+        const data = await response.json();
+        const favoriteIds = data.favorites.map((item: any) => item.id); // Lấy danh sách ID từ server
+        setFavorites(favoriteIds);
+        setIsFavorite(favoriteIds.includes(id)); // Kiểm tra sản phẩm hiện tại có trong danh sách không
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách yêu thích:", error);
+      }
+    };
+    if (userId) fetchFavorites(); 
+  }, [userId, id]);
+  
+  // Kiểm tra xem sản phẩm hiện tại có được yêu thích hay không
+  const handleToggleFavourite = async () => {
+    try {
+      if (isFavorite) {
+        // Nếu đang yêu thích, gửi yêu cầu xóa
+        const response = await fetch(
+          `http://192.168.1.150:3000/api/favorites?userId=${userId}&productId=${id}`,
+          {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        const result = await response.json();
+        if (result.message) {
+          setIsFavorite(false); // Cập nhật giao diện
+          setFavorites(favorites.filter(favId => favId !== id)); // Cập nhật danh sách local
+          console.log(result.message);
+        }
+      } else {
+        // Nếu chưa yêu thích, gửi yêu cầu thêm
+        const response = await fetch('http://192.168.1.150:3000/api/favorites', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: userId,
+            productId: id,
+          }),
+        });
+        const result = await response.json();
+        if (result.message) {
+          setIsFavorite(true); // Cập nhật giao diện
+          setFavorites([...favorites, id]); // Cập nhật danh sách local
+          console.log(result.message);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Lỗi khi thay đổi trạng thái yêu thích:', error);
+    }
+  };
+  
+  
   return (
     <View>
       <ImageBackground
-        source={imagelink_portrait}
+        source={{ uri: imagelink_portrait }}
         style={styles.ItemBackgroundImage}>
         {EnableBackHandler ? (
           <View style={styles.ImageHeaderBarContainerWithBack}>
-            <TouchableOpacity
-              onPress={() => {
-                BackHandler();
-              }}>
+            <TouchableOpacity onPress={BackHandler}>
               <GradientBGIcon
                 name="arrow-left"
                 color={COLORS.primaryLightGreyHex}
                 size={FONTSIZE.size_16}
               />
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => {
-                ToggleFavourite(favourite, type, id);
-              }}>
+            <TouchableOpacity onPress={handleToggleFavourite}>
               <GradientBGIcon
                 name="heart"
-                color={
-                  favourite ? COLORS.primaryRedHex : COLORS.primaryLightGreyHex
-                }
+                color={isFavorite ? COLORS.primaryRedHex : COLORS.primaryLightGreyHex}
                 size={FONTSIZE.size_16}
               />
             </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.ImageHeaderBarContainerWithoutBack}>
-            <TouchableOpacity
-              onPress={() => {
-                ToggleFavourite(favourite, type, id);
-              }}>
+            <TouchableOpacity onPress={handleToggleFavourite}>
               <GradientBGIcon
                 name="heart"
-                color={
-                  favourite ? COLORS.primaryRedHex : COLORS.primaryLightGreyHex
-                }
+                color={isFavorite ? COLORS.primaryRedHex : COLORS.primaryLightGreyHex}
                 size={FONTSIZE.size_16}
               />
             </TouchableOpacity>
           </View>
         )}
+    
 
         <View style={styles.ImageInfoOuterContainer}>
           <View style={styles.ImageInfoInnerContainer}>

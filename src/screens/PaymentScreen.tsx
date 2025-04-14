@@ -1,6 +1,7 @@
-import React, {useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import {
   StyleSheet,
@@ -9,6 +10,7 @@ import {
   StatusBar,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import {
   BORDERRADIUS,
@@ -48,34 +50,83 @@ const PaymentList = [
   },
 ];
 
-const PaymentScreen = ({navigation, route}: any) => {
-  const router = useRouter();
-  const calculateCartPrice = useStore((state: any) => state.calculateCartPrice);
-  const addToOrderHistoryListFromCart = useStore(
-    (state: any) => state.addToOrderHistoryListFromCart,
-  );
+
+const PaymentScreen = ({ navigation, route }: any) => {
+  // Lấy dữ liệu từ store (chỉ lấy một lần, tránh re-render liên tục)
+  const CartPrice = useStore((state) => state.CartPrice);
+  const CartList = useStore((state) => state.CartList);
+  const addToOrderHistoryListFromCart = useStore((state) => state.addToOrderHistoryListFromCart);
+  const calculateCartPrice = useStore((state) => state.calculateCartPrice);
 
   const [paymentMode, setPaymentMode] = useState('Credit Card');
   const [showAnimation, setShowAnimation] = useState(false);
 
-  const buttonPressHandler = () => {
+  const buttonPressHandler = useCallback(async () => {
     setShowAnimation(true);
-    addToOrderHistoryListFromCart();
-    calculateCartPrice();
-    
-    setTimeout(() => {
+    // Kiểm tra nếu giỏ hàng rỗng để tránh lỗi API
+    if (!CartPrice || CartList.length === 0) {
       setShowAnimation(false);
-      console.log('Current route names:', navigation.getState().routeNames);
+      return;
+    }
+    const userId = await AsyncStorage.getItem("user_id");
 
-      navigation.reset({
-        index: 0, 
-        routes: [{ name: 'Tab' }],
+    if (!userId) {
+      setShowAnimation(false);
+      Alert.alert("Thông báo","Bạn cần đăng nhập để đặt hàng.",
+        [
+          {text: "Đăng nhập",onPress: () => navigation.navigate("Login"),},
+          {text: "Hủy",style: "cancel",},
+        ]
+      );
+      return;
+    }
+
+    const orderData = {
+      user_id: userId,
+      TotalAmount: CartPrice,
+      items: CartList.map((item) => ({
+        ProductID: item.id,  // Thêm ID sản phẩm từ CartList
+        ProductType: item.type === "Bean" ? "Beans" : item.type,  // Thêm loại sản phẩm (ví dụ 'Coffee' hoặc 'Beans')
+        ProductName: item.name,
+        Description: item.description || "",
+        ImageURL: item.imagelink_portrait || "",
+        Size: item.prices[0]?.size || "M",
+        Price: parseFloat(item.prices[0]?.price) || 0,
+        Quantity: item.prices[0]?.quantity || 1,
+        OptionType:  item.prices[0]?.option,
+      })),
+    };
+    console.log("OderData: ", orderData);
+
+    try {
+      const response = await fetch("http://192.168.1.150:3000/api/create-history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(orderData),
       });
+      const result = await response.json();
+    
+      // Kiểm tra phản hồi từ API
+      if (result.success || result.message?.includes("Đơn hàng đã được tạo")) {
+        
+        addToOrderHistoryListFromCart(); // Cập nhật lịch sử đơn hàng
+        calculateCartPrice(); // Reset giỏ hàng
+    
+        // Chuyển hướng về trang chính
+        setTimeout(() => {
+          setShowAnimation(false);
+          navigation.reset({ index: 0, routes: [{ name: "Tab" }] });
+        }, 2000);
+      } else {
+        console.error("Lỗi đặt hàng:", result.message || "Không rõ lỗi.");
+      }
+    } catch (error) {
+      console.error("Lỗi kết nối API:", error);
+    }
+  }, [CartPrice, CartList, navigation, addToOrderHistoryListFromCart, calculateCartPrice]); 
+ 
 
-      console.log("Hiển thị");
-    }, 2000);
-};
-
+  
 
   return (
     <View style={styles.ScreenContainer}>
@@ -192,6 +243,7 @@ const PaymentScreen = ({navigation, route}: any) => {
         buttonTitle={`Pay with ${paymentMode}`}
         price={{price: route.params.amount, currency: '$'}}
         buttonPressHandler={buttonPressHandler}
+        
       />
     </View>
   );

@@ -1,4 +1,4 @@
-import {StyleSheet, Text, View, ImageProps, Image} from 'react-native';
+import {StyleSheet, Text, View, ImageProps, Image, ImageSourcePropType} from 'react-native';
 import React from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -13,10 +13,12 @@ import {
 interface OrderItemCardProps {
   type: string;
   name: string;
-  imagelink_square: ImageProps;
+  imagelink_square: ImageSourcePropType;
   special_ingredient: string;
   prices: any;
   ItemPrice: string;
+  Quantity: number;  // Thêm số lượng
+  TotalPrice: number; // Thêm tổng tiền
 }
 
 const OrderItemCard: React.FC<OrderItemCardProps> = ({
@@ -26,8 +28,12 @@ const OrderItemCard: React.FC<OrderItemCardProps> = ({
   special_ingredient,
   prices,
   ItemPrice,
+  Quantity,
+  TotalPrice
 }) => {
+  
   return (
+    
     <LinearGradient
       start={{x: 0, y: 0}}
       end={{x: 1, y: 1}}
@@ -48,6 +54,7 @@ const OrderItemCard: React.FC<OrderItemCardProps> = ({
         </View>
       </View>
       {prices.map((data: any, index: any) => (
+        
         <View key={index.toString()} style={styles.CardTableRow}>
           <View style={styles.CardTableRow}>
             <View style={styles.SizeBoxLeft}>
@@ -72,11 +79,12 @@ const OrderItemCard: React.FC<OrderItemCardProps> = ({
 
           <View style={styles.CardTableRow}>
             <Text style={styles.CardQuantityPriceText}>
-              X <Text style={styles.Price}>{data.quantity}</Text>
+            X <Text style={styles.Price}>{Quantity}</Text>
             </Text>
             <Text style={styles.CardQuantityPriceText}>
-              $ {(data.quantity * data.price).toFixed(2).toString()}
+              $ {(Number(data?.Quantity || 1) * Number(data?.price || 0)).toFixed(2)}
             </Text>
+
           </View>
         </View>
       ))}

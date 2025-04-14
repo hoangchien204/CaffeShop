@@ -2,6 +2,14 @@
   "expo": {
     "name": "ShopCafe",
     "slug": "ShopCafe",
-    "newArchEnabled": true
+    "newArchEnabled": true,
+    "extra": {
+      "expoServerUrl": "http://192.168.1.199:8081",
+      "expoDevServerUrl": "http://192.168.1.199:8081"
+    },
+    "android": {
+      "usesCleartextTraffic": true
+    }
   }
+  
 }
