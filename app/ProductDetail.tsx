@@ -179,7 +179,7 @@ const ProductDetailScreen: React.FC = () => {
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
 
-          <Text style={styles.orderTitle}>Chi tiết đơn hàng</Text>
+          <Text style={styles.orderTitle}>Oder detail</Text>
         </View>
 
         <Text style={styles.detail}>

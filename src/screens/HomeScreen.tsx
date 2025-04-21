@@ -99,9 +99,21 @@ const HomeScreen = ({navigation}: any) => {
   }, [CoffeeList]);
 
  
-  useEffect(() => {
+  // 🛠 Cập nhật useEffect của sortedCoffee
+useEffect(() => {
+  if (searchText.length > 0) {
+    // Nếu có searchText → lọc theo search
+    setSortedCoffee(
+      CoffeeList.filter((item: any) =>
+        item.name.toLowerCase().includes(searchText.toLowerCase())
+      )
+    );
+  } else {
+    // Nếu không search → lọc theo category
     setSortedCoffee(getCoffeeList(categoryIndex.category, CoffeeList));
-  }, [categoryIndex, CoffeeList]);
+  }
+}, [searchText, categoryIndex, CoffeeList]);
+
 
   const [sortedBeans, setSortedBeans] = useState<any[]>([]);
 
@@ -149,8 +161,6 @@ useEffect(() => {
     selectedSize: string,
     selectedOption: string
   ) => {
-    console.log("✅ item.prices:", item.prices);
-console.log("🔎 selectedSize:", selectedSize, "selectedOption:", selectedOption);
     const addToCart = useStore.getState().addToCart;
     const calculateCartPrice = useStore.getState().calculateCartPrice;
   
