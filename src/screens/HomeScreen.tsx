@@ -321,72 +321,67 @@ const validPrice = item.prices.find((p) => {
         {sortedCoffee.length === 0 ? (
   <Text style={{ textAlign: 'center', marginTop: 20 }}>Loading coffee data...</Text>
 ) : (
-        <FlatList
-        ref={ListRef}
-        horizontal
-        ListEmptyComponent={
-          <View style={styles.EmptyListContainer}>
-            <Text style={styles.CategoryText}>No Coffee Available</Text>
-          </View>
-        }
-        
-        showsHorizontalScrollIndicator={false}
-        data={sortedCoffee}
-        contentContainerStyle={styles.FlatListContainer}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item, index }) => { // Lấy index từ renderItem
-          if (!item || !item.prices) {
-            console.error("Lỗi: item hoặc prices bị undefined!", item);
-            return null;
-          }
+  <FlatList
+  ref={ListRef}
+  horizontal
+  ListEmptyComponent={
+    <View style={styles.EmptyListContainer}>
+      <Text style={styles.CategoryText}>No Coffee Available</Text>
+    </View>
+  }
+  showsHorizontalScrollIndicator={false}
+  data={sortedCoffee}
+  contentContainerStyle={styles.FlatListContainer}
+  keyExtractor={(item) => item.id.toString()}
+  onEndReachedThreshold={0.5}
+  onEndReached={() => {
+    fetchCoffeeList(); // 👈 gọi hàm trong store khi gần cuối danh sách
+  }}
+  renderItem={({ item, index }) => {
+    if (!item || !item.prices) return null;
 
-          let pricesArray = [];
-          if (item.prices) {
-            try {
-              pricesArray = typeof item.prices === "string" ? JSON.parse(item.prices) : item.prices;
-         
-            } catch (error) {
-              console.error("❌ Lỗi parse JSON:", error);
-            }
-          }
-          const priceValue = pricesArray.length > 0 && pricesArray[0]?.price !== undefined
-            ? `${pricesArray[0].currency}${pricesArray[0].price}`
-            : "N/A";
-          return (
-            <TouchableOpacity
-            onPress={() => {
-                navigation.push("Details", {
-                index, // Dùng index từ FlatList
-                id: item.id,
-                type: item.type,
-              });
-            }}
-            >
-              <CoffeeCard
-                id={item.id}
-                index={index}
-                type={item.type}
-                roasted={item.roasted}
-                imagelink_square={item.imagelink_square}
-                name={item.name}
-                special_ingredient={item.special_ingredient}
-                average_rating={item.average_rating}
-                price={priceValue}
-                buttonPressHandler={() => {
-                  const defaultSize = item.prices[0].size;
-                  const defaultOption = item.type.toLowerCase() === 'coffee' ? 'Nóng' : 'Không có';
-                  handleAddToCart(item, defaultSize, defaultOption);
-                }}
-                
-              />
-              
-              
-            </TouchableOpacity>
-            
-          );
-          
-        }}  
-      />
+    let pricesArray = [];
+    try {
+      pricesArray = typeof item.prices === "string" ? JSON.parse(item.prices) : item.prices;
+    } catch (error) {
+      console.error("❌ Lỗi parse JSON:", error);
+    }
+
+    const priceValue = pricesArray.length > 0 && pricesArray[0]?.price !== undefined
+      ? `${pricesArray[0].currency}${pricesArray[0].price}`
+      : "N/A";
+
+    return (
+      <TouchableOpacity
+        onPress={() => {
+          navigation.push("Details", {
+            index,
+            id: item.id,
+            type: item.type,
+          });
+        }}
+      >
+        <CoffeeCard
+          id={item.id}
+          index={index}
+          type={item.type}
+          roasted={item.roasted}
+          imagelink_square={item.imagelink_square}
+          name={item.name}
+          special_ingredient={item.special_ingredient}
+          average_rating={item.average_rating}
+          price={priceValue}
+          buttonPressHandler={() => {
+            const defaultSize = item.prices[0].size;
+            const defaultOption = item.type.toLowerCase() === 'coffee' ? 'Nóng' : 'Không có';
+            handleAddToCart(item, defaultSize, defaultOption);
+          }}
+        />
+      </TouchableOpacity>
+    );
+  }}
+/>
+
 
     )}
 

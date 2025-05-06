@@ -5,8 +5,8 @@ import {persist, createJSONStorage} from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CoffeeData from '../data/CoffeeData';
 import BeansData from '../data/BeansData';
-
-
+const URL_LINK = "http://CHIN:3000";
+import API from "../../app/IPconfig";
 
 // Gọi hàm xóa dữ liệu
 
@@ -72,7 +72,7 @@ interface Price {
   size: string;
   price: string; // price là string trong dữ liệu
   currency: string;
-  quantity?: number; // quantity là tùy chọn
+  quantity?: number;
   option?: string;
 }
 
@@ -102,6 +102,7 @@ interface OrderItem {
   Size: string;
   Price: number;
   Quantity: number;
+  options ?: string;
 }
 
 interface StoreOrder {
@@ -153,24 +154,30 @@ export const useStore = create<CoffeeStore>()(
       CartList: [],
       OrderHistoryList: [],
       CartItems: [],
-
+      page: 1,
+      hasMore: true, // 👈 thêm biến này để kiểm tra còn dữ liệu
+  
       setOrderHistoryList: (orders) => set({ OrderHistoryList: orders }),
+  
       fetchCoffeeList: async () => {
+        const { page, hasMore, CoffeeList } = get();
+  
+        if (!hasMore) return; // 👈 nếu hết thì không gọi nữa
+  
         try {
-          const response = await fetch('http://192.168.1.150:3000/api/get-coffees');
+          const response = await fetch(`${API.fetchCoffeeList}?page=${page}&limit=5`);
           const result = await response.json();
-          if (result.data) {
-            // Chuẩn hóa dữ liệu từ API
+  
+          if (result.data && result.data.length > 0) {
             const normalizedData = result.data.map((item: any) => {
-              // Parse chuỗi JSON của prices thành mảng
               let parsedPrices: { size: string; price: string; currency: string }[] = [];
               try {
                 parsedPrices = typeof item.prices === 'string' ? JSON.parse(item.prices) : item.prices;
               } catch (error) {
                 console.error('Error parsing prices for item:', item.id, error);
-                parsedPrices = [{ size: 'M', price: '0.00', currency: 'USD' }]; // Giá trị mặc định nếu parse thất bại
+                parsedPrices = [{ size: 'M', price: '0.00', currency: 'USD' }];
               }
-      
+  
               return {
                 id: String(item.id),
                 name: item.name || 'Unknown Coffee',
@@ -185,21 +192,28 @@ export const useStore = create<CoffeeStore>()(
                 ratings_count: String(item.ratings_count || '0'),
                 favourite: item.favourite || false,
                 type: item.type || 'Coffee',
-                index: item.index_position || 0, // Ánh xạ index_position thành index
+                index: item.index_position || 0,
               };
             });
-      
-            set({ CoffeeList: normalizedData });
+  
+            set({
+              CoffeeList: [...CoffeeList, ...normalizedData],
+              page: page + 1,
+              hasMore: result.data.length === 5, // 👈 nếu ít hơn 5 là hết rồi
+            });
           } else {
-            console.error('API Error: No data found');
+            console.warn("❗ Không còn sản phẩm để tải tiếp");
+            set({ hasMore: false });
           }
         } catch (error) {
-          console.error('Error fetching coffee list:', error);
+          console.error('❌ Lỗi khi fetch coffee list:', error);
         }
       },
+    
+  
       fetchBeansList: async () => {
         try {
-          const response = await fetch('http://192.168.1.150:3000/api/get-beans');
+          const response = await fetch(`${API.fetchBeansList}?page=1&limit=5`);
           const result = await response.json();
       
     

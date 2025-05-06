@@ -22,7 +22,7 @@ import EmptyListAnimation from '../components/EmptyListAnimation';
 import PopUpAnimation from '../components/PopUpAnimation';
 import OrderHistoryCard from '../components/OrderHistoryCard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import API from "../../app/IPconfig";
 const OrderHistoryScreen = ({ navigation }: any) => {
   const tabBarHeight = useBottomTabBarHeight();
 
@@ -41,12 +41,14 @@ const OrderHistoryScreen = ({ navigation }: any) => {
     return userId || "guest";
   };
 
-  const fetchOrderHistory = async () => {
+  const fetchOrderHistory = async (page = 1, limit = 5) => {
     try {
+      setLoading(true);  // Đảm bảo rằng trạng thái loading được bật lên khi bắt đầu fetch
+  
       const userId = await getUserId();
-      const response = await fetch(`http://192.168.1.150:3000/api/orders?user_id=${userId}`);
+      const response = await fetch(`${API.fetchOrderHistory}?user_id=${userId}&page=${page}&limit=${limit}`);
       const data = await response.json();
-
+  
       if (Array.isArray(data?.data) && data.data.length > 0) {
         const sortedData = data.data.sort(
           (a: { OrderDate: string; OrderID: number }, b: { OrderDate: string; OrderID: number }) =>
@@ -61,10 +63,10 @@ const OrderHistoryScreen = ({ navigation }: any) => {
       console.error("❌ Lỗi khi lấy danh sách đơn hàng:", error);
       setOrderHistoryList([]);
     } finally {
-      setLoading(false);
+      setLoading(false);  // Đảm bảo rằng trạng thái loading được tắt khi hoàn thành
     }
   };
-
+  
   useEffect(() => {
     fetchOrderHistory();
   }, []);
@@ -94,67 +96,87 @@ const OrderHistoryScreen = ({ navigation }: any) => {
       setShowAnimation(false);
     }, 2000);
   };
+  const [page, setPage] = useState(1);
 
+  const handleLoadMore = () => {
+    setPage(prevPage => prevPage + 1);
+  };
+  
+  useEffect(() => {
+    fetchOrderHistory(page);  // Gọi API mỗi khi page thay đổi
+  }, [page]);
+  
   return (
     <View style={styles.ScreenContainer}>
-      <StatusBar backgroundColor={COLORS.primaryBlackHex} />
+    <StatusBar backgroundColor={COLORS.primaryBlackHex} />
 
-      {showAnimation ? (
-        <PopUpAnimation
-          style={styles.LottieAnimation}
-          source={require('../lottie/download.json')}
-        />
-      ) : (
-        <></>
-      )}
+    {showAnimation ? (
+      <PopUpAnimation
+        style={styles.LottieAnimation}
+        source={require('../lottie/download.json')}
+      />
+    ) : (
+      <></>
+    )}
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.ScrollViewFlex}>
-        <View style={[styles.ScrollViewInnerView, { marginBottom: tabBarHeight }]}>
-          <View style={styles.ItemContainer}>
-            <HeaderBar title="Order History" />
+<ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.ScrollViewFlex}
+      onScroll={({ nativeEvent }) => {
+        const { contentOffset, contentSize } = nativeEvent;
+        const isCloseToBottom = contentOffset.y >= contentSize.height - 1 - contentOffset.height;
+        if (isCloseToBottom && !loading) {
+          handleLoadMore();  // Tải thêm khi cuộn đến cuối
+        }
+      }}
+      scrollEventThrottle={400}  // Điều chỉnh tốc độ phản hồi sự kiện cuộn
+    >
+      <View style={[styles.ScrollViewInnerView, { marginBottom: tabBarHeight }]}>
+        <View style={styles.ItemContainer}>
+          <HeaderBar title="Order History" />
 
-            {OrderHistoryList.length === 0 ? (
-              <EmptyListAnimation title={'No Order History'} />
-            ) : (
-              <View style={styles.ListItemContainer}>
-                {Array.isArray(OrderHistoryList) ? (
-                  OrderHistoryList.length > 0 ? (
-                    OrderHistoryList.map((data: any, index: number) => {
-                      // Hiển thị sản phẩm đầu tiên nếu có nhiều hơn 1 sản phẩm
-                      const displayItems = data?.items && Array.isArray(data.items)
-                        ? data.items.slice(0, 1) // Chỉ lấy sản phẩm đầu tiên
-                        : [];
-                      return (
-                        <OrderHistoryCard
-                          key={index.toString()}
-                          navigationHandler={navigationHandler}
-                          CartList={displayItems}
-                          TotalAmount={parseFloat(data?.TotalAmount) || 0}
-                          OrderDate={data?.OrderDate ?? "N/A"}
-                          onProductClick={handleProductClick} // Truyền hàm xử lý sự kiện bấm vào sản phẩm
-                          OrderID={data?.OrderID ?? ''}                       />
-                      );
-                    })
-                  ) : (
-                    <Text style={{ textAlign: 'center', marginTop: 20 }}>Không có đơn hàng nào</Text>
-                  )
+          {OrderHistoryList.length === 0 ? (
+            <EmptyListAnimation title={'No Order History'} />
+          ) : (
+            <View style={styles.ListItemContainer}>
+              {Array.isArray(OrderHistoryList) ? (
+                OrderHistoryList.length > 0 ? (
+                  OrderHistoryList.map((data: any, index: number) => {
+                    const displayItems = data?.items && Array.isArray(data.items) ? data.items.slice(0, 1) : [];
+                    return (
+                      <OrderHistoryCard
+                        key={index.toString()}
+                        navigationHandler={navigationHandler}
+                        CartList={displayItems}
+                        TotalAmount={parseFloat(data?.TotalAmount) || 0}
+                        OrderDate={data?.OrderDate ?? "N/A"}
+                        onProductClick={handleProductClick}
+                        OrderID={data?.OrderID ?? ''}
+                      />
+                    );
+                  })
                 ) : (
-                  <Text style={{ textAlign: 'center', marginTop: 20 }}>Đang tải...</Text>
-                )}
-              </View>
-            )}
-          </View>
-
-          {OrderHistoryList.length > 0 && (
-            <TouchableOpacity
-              style={styles.DownloadButton}
-              onPress={buttonPressHandler}>
-              <Text style={styles.ButtonText}>Download</Text>
-            </TouchableOpacity>
+                  <Text style={{ textAlign: 'center', marginTop: 20 }}>Không có đơn hàng nào</Text>
+                )
+              ) : (
+                <Text style={{ textAlign: 'center', marginTop: 20 }}>Đang tải...</Text>
+              )}
+            </View>
           )}
         </View>
+
+        {OrderHistoryList.length > 0 && !loading && (
+          <TouchableOpacity
+            style={styles.DownloadButton}
+            onPress={buttonPressHandler}
+          >
+            <Text style={styles.ButtonText}>Download</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Hiển thị nút tải thêm nếu còn dữ liệu */}
+        {loading && <Text style={{ textAlign: 'center', marginTop: 20 }}>Đang tải thêm...</Text>}
+      </View>
       </ScrollView>
     </View>
   );

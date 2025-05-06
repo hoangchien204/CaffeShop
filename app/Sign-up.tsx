@@ -6,6 +6,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { Ionicons } from "@expo/vector-icons";
+import API from "./IPconfig";
 
 const SignUpScreen = () => {
   const navigation = useNavigation();
@@ -40,7 +41,7 @@ const SignUpScreen = () => {
     }
 
     try {
-      const response = await axios.post("http://192.168.1.150:3000/api/register", {
+      const response = await axios.post(API.SIGNUP, {
         username,
         email,
         password
@@ -50,7 +51,7 @@ const SignUpScreen = () => {
       navigateTo("Login");
 
     } catch (error) {
-      Alert.alert("Lỗi", (error as any).response?.data?.error || "Đăng ký thất bại.");
+      Alert.alert("","Đăng ký thất bại.");
     }
   };
 

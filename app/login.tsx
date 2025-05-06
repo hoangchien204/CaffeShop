@@ -7,7 +7,10 @@ import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
 import { Ionicons } from "@expo/vector-icons";
 
-// Định nghĩa kiểu cho các màn hình
+import API from "./IPconfig";
+
+
+
 type RootStackParamList = {
   Tab: { screen: keyof TabParamList };
 };
@@ -55,7 +58,7 @@ const handleLogin = async () => {
   }
 
   try {
-    const response = await fetch("http://192.168.1.150:3000/api/login", {
+    const response = await fetch(API.LOGIN, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
@@ -74,8 +77,8 @@ const handleLogin = async () => {
     showAlert("Thành công", "Đăng nhập thành công!");
     navigation.navigate("Tab", { screen: "Home" });
   } catch (error) {
-    console.error("Lỗi đăng nhập:", error);
-    showAlert("Lỗi", "Không thể kết nối đến máy chủ!");
+  
+    showAlert("","Sai mật khẩu");
   }
 };
 

@@ -8,6 +8,8 @@ import {
   ImageBackground,
 } from 'react-native';
 
+import API from "../../app/IPconfig";
+
 import GradientBGIcon from './GradientBGIcon';
 import {
   BORDERRADIUS,
@@ -77,7 +79,7 @@ const ImageBackgroundInfo: React.FC<ImageBackgroundInfoProps> = ({
   useEffect(() => {
     const fetchFavorites = async () => {
       try {
-        const response = await fetch(`http://192.168.1.150:3000/api/favorites?userId=${userId}`);
+        const response = await fetch(`${API.fetchFavorites}?userId=${userId}`);
         const data = await response.json();
         const favoriteIds = data.favorites.map((item: any) => item.id); // Lấy danh sách ID từ server
         setFavorites(favoriteIds);
@@ -95,7 +97,7 @@ const ImageBackgroundInfo: React.FC<ImageBackgroundInfoProps> = ({
       if (isFavorite) {
         // Nếu đang yêu thích, gửi yêu cầu xóa
         const response = await fetch(
-          `http://192.168.1.150:3000/api/favorites?userId=${userId}&productId=${id}`,
+          `${API.fetchFavorites}?userId=${userId}&productId=${id}`,
           {
             method: 'DELETE',
             headers: {
@@ -111,7 +113,7 @@ const ImageBackgroundInfo: React.FC<ImageBackgroundInfoProps> = ({
         }
       } else {
         // Nếu chưa yêu thích, gửi yêu cầu thêm
-        const response = await fetch('http://192.168.1.150:3000/api/favorites', {
+        const response = await fetch(API.fetchFavorites, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

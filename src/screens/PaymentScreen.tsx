@@ -2,7 +2,7 @@ import React, {useCallback, useEffect, useState} from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import API from "../../app/IPconfig";
 import {
   StyleSheet,
   Text,
@@ -99,7 +99,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
     console.log("OderData: ", orderData);
 
     try {
-      const response = await fetch("http://192.168.1.150:3000/api/create-history", {
+      const response = await fetch(API.createhistory, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData),

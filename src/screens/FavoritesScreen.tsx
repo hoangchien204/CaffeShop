@@ -15,7 +15,7 @@ import EmptyListAnimation from '../components/EmptyListAnimation';
 import FavoritesItemCard from '../components/FavoritesItemCard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from 'expo-router';
-
+import API from "../../app/IPconfig";
 const getUserId = async () => {
   try {
     const userId = await AsyncStorage.getItem("user_id");
@@ -47,7 +47,7 @@ const fetchFavorites = async () => {
       return;
     }
 
-    const response = await fetch(`http://192.168.1.150:3000/api/favorites?userId=${userId}`);
+    const response = await fetch(`${API.fetchFavorites}?userId=${userId}`);
     if (response.ok) {
       const data = await response.json();
       console.log("Dữ liệu từ API:", data);
@@ -84,7 +84,7 @@ const fetchFavorites = async () => {
           return;
         }
         
-        const response = await fetch(`http://192.168.1.150:3000/api/favorites?userId=${userId}`);
+        const response = await fetch(`${API.fetchFavorites}?userId=${userId}`);
         if (response.ok) {
           const data = await response.json();
        
@@ -119,7 +119,7 @@ const fetchFavorites = async () => {
   
       if (favourite) {
         // Xóa khỏi danh sách yêu thích
-        const response = await fetch(`http://192.168.1.150:3000/api/favorites?userId=${userId}&productId=${id}`, {
+        const response = await fetch(`${API.fetchFavorites}?userId=${userId}&productId=${id}`, {
           method: "DELETE",
         });
         if (response.ok) {
@@ -131,7 +131,7 @@ const fetchFavorites = async () => {
         }
       } else {
         // Thêm vào danh sách yêu thích
-        const response = await fetch("http://192.168.1.150:3000/api/favorites", {
+        const response = await fetch(API.fetchFavorites, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

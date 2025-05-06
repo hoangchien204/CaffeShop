@@ -6,8 +6,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS, FONTFAMILY, FONTSIZE, SPACING } from '../src/theme/theme';
 import { RootStackParamList } from '../types/navigation';
 import { useStore } from '../src/store/store';
+import API from './IPconfig';
 
-const URL = 'http://192.168.1.150:3000';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -25,11 +25,11 @@ const ProductDetailScreen: React.FC = () => {
 
   const addToCarthandler = (orderItems: any[]) => {
     orderItems.forEach((item) => {
-      // Xác định roasted, special_ingredient, type dựa trên ProductType
+
       const roasted = item.CoffeeRoasted || item.BeansRoasted || "Unknown Roasted";
       const special_ingredient = item.CoffeeSpecialIngredient || item.BeansSpecialIngredient || "No Special Ingredient";
-      const type = item.CoffeeType || item.BeansType || "Coffee"; // Giả sử mặc định là "Coffee"
-  
+      const type = item.CoffeeType || item.BeansType || "Coffee";
+      
       addToCart({
         id: item.ProductID || item.id,
         name: item.ProductName || item.name || "Unnamed Product",
@@ -39,18 +39,21 @@ const ProductDetailScreen: React.FC = () => {
           {
             size: item.Size || item.prices?.[0]?.size || 'M',
             quantity: item.Quantity || item.prices?.[0]?.quantity || 1,
-            price: item.Price?.toString() || item.prices?.[0]?.price?.toString() || '0'
+            price: item.Price?.toString() || item.prices?.[0]?.price?.toString() || '0',
+            option: item.OptionType || null
           }
         ],
         roasted: roasted,
         special_ingredient: special_ingredient,
         type: type,
-        option: item.option || null,
+       
+        
       });
     });
   
     navigation.navigate("Tab", { screen: "Cart" });
   };
+  
   
   const getUserId = async () => {
     let userId = await AsyncStorage.getItem('user_id');
@@ -83,7 +86,7 @@ const ProductDetailScreen: React.FC = () => {
       }
       const userId = await getUserId();
       try {
-        const response = await fetch(`${URL}/api/order-history?orderId=${orderId}&user_id=${userId}`);
+        const response = await fetch(`${API.ProductDetail}?orderId=${orderId}&user_id=${userId}`);
 
         if (!response.ok) {
           throw new Error(`Lỗi HTTP: ${response.status}`);

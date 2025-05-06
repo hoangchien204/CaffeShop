@@ -21,7 +21,7 @@ import PaymentFooter from '../components/PaymentFooter';
 import { ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { options } from 'pdfkit';
-const URL = 'http://192.168.1.150:3000';
+import API from "../../app/IPconfig";
 
 //lấy user_id
 const getUserId = async () => {
@@ -96,7 +96,7 @@ const DetailsScreen = ({ navigation, route }: any) => {
             setPrice(parsedPrices.length > 0 ? parsedPrices[0] : null);
           } else {
             // Nếu không tìm thấy trong dataList, gọi API để lấy chi tiết sản phẩm
-            const response = await fetch(`${URL}/api/products/${type}/${id}`);
+            const response = await fetch(`${API.fetchProductDetails}/${type}/${id}`);
             if (response.ok) {
               const productData = await response.json();
               setItem(productData);
@@ -153,7 +153,7 @@ const DetailsScreen = ({ navigation, route }: any) => {
       const userId: string = String(await getUserId());
       if (favourite) {
         // Xóa khỏi danh sách yêu thích
-        await fetch(`${URL}/api/favorites?userId=${userId}&productId=${id}`, {
+        await fetch(`${API.fetchFavorites}?userId=${userId}&productId=${id}`, {
           method: "DELETE",
         });
         setFavorites((prev) => prev.filter((favId) => favId !== id));
@@ -163,7 +163,7 @@ const DetailsScreen = ({ navigation, route }: any) => {
         }));
       } else {
         // Thêm vào danh sách yêu thích
-        await fetch("http://192.168.1.150:3000/api/favorites", {
+        await fetch(API.fetchFavorites, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
