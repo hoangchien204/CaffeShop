@@ -1,4 +1,4 @@
-const URL_LINK = "http://192.168.1.155:3000";
+const URL_LINK = "http://http://192.168.1.7:3000:3000";
 
 const API = {
     LOGIN: `${URL_LINK}/api/login`,
